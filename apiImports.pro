@@ -13,6 +13,12 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    apiCalls.cpp \
+    settings.cpp \
+    jsUtils.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    apiCalls.h \
+    settings.h \
+    jsUtils.h

@@ -4,6 +4,7 @@
 #include <QMainWindow>
 
 class QListView;
+class QSettings;
 
 class MainWindow : public QMainWindow
 {
@@ -18,11 +19,12 @@ private:
     void runImport( const QString& import );
 
 private slots:
+    void openSettings();
     void onImportDblClicked( const QModelIndex& index );
 
 private:
     QListView* importsListView;
-
+    QSettings* settings;
 };
 
 #endif // MAINWINDOW_H
