@@ -12,6 +12,10 @@ public:
     OmpApiJsUtils( QObject* parent = nullptr );
 
     Q_INVOKABLE QJSValue chooseFile();
+    Q_INVOKABLE QJSValue readFile( const QString& path );
+
+signals:
+    void log( const QString& msg );
 };
 
 #endif // JSUTILS_H

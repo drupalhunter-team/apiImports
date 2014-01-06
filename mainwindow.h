@@ -3,7 +3,8 @@
 
 #include <QMainWindow>
 
-class QListView;
+class QTableView;
+class QTextEdit;
 class QSettings;
 
 class MainWindow : public QMainWindow
@@ -16,15 +17,17 @@ public:
 
 private:
     void initImportsListView();
-    void runImport( const QString& import );
+    void runImport( const QString& file, const QString& function );
 
 private slots:
     void openSettings();
     void onImportDblClicked( const QModelIndex& index );
+    void appendLog( const QString& msg );
 
 private:
-    QListView* importsListView;
+    QTableView* importsView;
     QSettings* settings;
+    QTextEdit* logView;
 };
 
 #endif // MAINWINDOW_H

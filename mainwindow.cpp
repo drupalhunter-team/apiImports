@@ -2,8 +2,9 @@
 #include <QScriptEngine>
 #include <QFile>
 #include <QDebug>
-#include <QListView>
-#include <QHBoxLayout>
+#include <QTableView>
+#include <QHeaderView>
+#include <QVBoxLayout>
 #include <QStringListModel>
 #include <QJSEngine>
 #include <QQmlEngine>
@@ -11,18 +12,25 @@
 #include <QDir>
 #include <QSettings>
 #include <QCoreApplication>
+#include <QDirModel>
+#include <QTextEdit>
 #include "apiCalls.h"
 #include "settings.h"
 #include "jsUtils.h"
-
+#include "JsImportInfo.h"
+#include "JsImportsModel.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     settings = new QSettings( QSettings::IniFormat, QSettings::UserScope, QCoreApplication::instance()->organizationName(), QCoreApplication::instance()->applicationName(), this );
 
-    importsListView = new QListView( this );
-    importsListView->setEditTriggers( QAbstractItemView::NoEditTriggers );
+    importsView = new QTableView( this );
+    importsView->setEditTriggers( QAbstractItemView::NoEditTriggers );
+    importsView->horizontalHeader()->setSectionsMovable( true );
+
+    logView = new QTextEdit( this );
+    logView->setReadOnly( true );
 
     QAction* settingsAct = new QAction( tr("&Settings..."), this );
     QObject::connect( settingsAct, SIGNAL(triggered()), this, SLOT(openSettings()) );
@@ -30,12 +38,14 @@ MainWindow::MainWindow(QWidget *parent)
     QMenu* toolsMenu = menuBar()->addMenu( tr("&Tools") );
     toolsMenu->addAction( settingsAct );
 
-    QObject::connect( importsListView, SIGNAL( doubleClicked(const QModelIndex&)), this, SLOT( onImportDblClicked(const QModelIndex&) ) );
+
+    QObject::connect( importsView, SIGNAL( doubleClicked(const QModelIndex&)), this, SLOT( onImportDblClicked(const QModelIndex&) ) );
 
     initImportsListView();
 
-    QHBoxLayout* layout = new QHBoxLayout( this );
-    layout->addWidget( importsListView );
+    QVBoxLayout* layout = new QVBoxLayout( this );
+    layout->addWidget( importsView );
+    layout->addWidget( logView );
 
     QWidget* centralWidget = new QWidget( this );
     centralWidget->setLayout( layout );
@@ -56,7 +66,7 @@ void MainWindow::initImportsListView()
 
     QStringList jsFiles = importsDir.entryList( QStringList( "*.js" ), QDir::Files | QDir::NoSymLinks );
 
-    QStringList validImportFiles;
+    QList<JsImportInfo*> jsImports;
 
     for( int i = 0; i < jsFiles.size(); i++ )
     {
@@ -64,9 +74,12 @@ void MainWindow::initImportsListView()
 
         {
             QString contents;
-            QFile scriptFile( jsFiles[i] );
+            QFile scriptFile( path + "/" + jsFiles[i] );
             if( !scriptFile.open( QIODevice::ReadOnly ) )
+            {
                 qDebug() << "Fail to open file \"" << jsFiles[i] << "\"";
+                continue;
+            }
 
             QTextStream stream( &scriptFile );
             contents = stream.readAll();
@@ -79,25 +92,40 @@ void MainWindow::initImportsListView()
                 qDebug() << "Uncaught exception: " << ret.toString();
                 continue;
             }
-        }
 
-        validImportFiles << path + "/" + jsFiles[i];
+            QJSValue avImports = engine.globalObject().property( "availibleImports" );
+            if( avImports.isUndefined() )
+                continue;
+
+            Q_ASSERT( avImports.isArray() );
+
+            int length = avImports.property( "length" ).toInt();
+            for( long j = 0; j < length; j++ )
+            {
+                QJSValue jsImportVal = avImports.property( j );
+
+                JsImportInfo* importInfo = new JsImportInfo( jsImportVal, this );
+                importInfo->File = path + "/" + jsFiles[i];
+
+                jsImports << importInfo;
+            }
+        }
     }
 
-    importsListView->setModel( new QStringListModel( validImportFiles, this ) );
+    importsView->setModel( new JsImportsModel( jsImports, this ) );
 }
 
-void MainWindow::runImport( const QString& import )
+void MainWindow::runImport( const QString& file, const QString& function )
 {
     QJSEngine engine;
 
     {
         QString contents;
 
-        QFile scriptFile( import );
+        QFile scriptFile( file );
         if( !scriptFile.open( QIODevice::ReadOnly ) )
         {
-            qDebug() << "Fail to open file \"" << import << "\"";
+            qDebug() << "Fail to open file \"" << file << "\"";
             return;
         }
 
@@ -106,7 +134,7 @@ void MainWindow::runImport( const QString& import )
 
         scriptFile.close();
 
-        QJSValue ret = engine.evaluate( contents, import );
+        QJSValue ret = engine.evaluate( contents, file );
         if( ret.isError() )
         {
             qDebug() << "Uncaught exception: " << ret.toString();
@@ -122,9 +150,11 @@ void MainWindow::runImport( const QString& import )
     OmpApiJsUtils* jsUtils = new OmpApiJsUtils();
     QJSValue jsUtilsValue = engine.newQObject( jsUtils );
 
-    engine.globalObject().setProperty( "UTILS", jsUtilsValue );
+    QObject::connect( jsUtils, SIGNAL( log(const QString&) ), this, SLOT( appendLog(const QString&) ) );
 
-    QJSValue runImportFunction = engine.globalObject().property( "runImport" );
+    engine.globalObject().setProperty( "utils", jsUtilsValue );
+
+    QJSValue runImportFunction = engine.globalObject().property( function );
 
     QJSValue res = runImportFunction.call( QJSValueList() );
 
@@ -146,6 +176,15 @@ void MainWindow::openSettings()
 
 void MainWindow::onImportDblClicked( const QModelIndex& index )
 {
-//    qDebug() << index.row() << importsListView->model()->data( index ).toString();
-    runImport( importsListView->model()->data( index ).toString() );
+    QAbstractItemModel* model = importsView->model();
+
+    QModelIndex fileIndex = model->index( index.row(), JsImportsModel::HidFile );
+    QModelIndex fnIndex = model->index( index.row(), JsImportsModel::HidFunction );
+
+    runImport( model->data( fileIndex ).toString(), model->data( fnIndex ).toString() );
+}
+
+void MainWindow::appendLog( const QString& msg )
+{
+    logView->append( msg );
 }

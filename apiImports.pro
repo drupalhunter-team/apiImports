@@ -16,9 +16,13 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     apiCalls.cpp \
     settings.cpp \
-    jsUtils.cpp
+    jsUtils.cpp \
+    JsImportInfo.cpp \
+    JsImportsModel.cpp
 
 HEADERS  += mainwindow.h \
     apiCalls.h \
     settings.h \
-    jsUtils.h
+    jsUtils.h \
+    JsImportInfo.h \
+    JsImportsModel.h
