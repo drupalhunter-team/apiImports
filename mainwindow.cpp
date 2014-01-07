@@ -142,6 +142,47 @@ void MainWindow::runImport( const QString& file, const QString& function )
         }
     }
 
+    QStringList imports;
+
+    QJSValue includesJsArray = engine.globalObject().property( "includes" );
+    if( includesJsArray.isObject() )
+    {
+        Q_ASSERT( includesJsArray.isArray() );
+
+        QString path = file.left( file.lastIndexOf( '/' ) );
+
+        int length = includesJsArray.property( "length" ).toInt();
+        for( long j = 0; j < length; j++ )
+        {
+            QJSValue import = includesJsArray.property( j );
+            imports << path + "/" + import.toString();
+        }
+    }
+
+    foreach( QString importPath, imports )
+    {
+        QString contents;
+
+        QFile scriptFile( importPath );
+        if( !scriptFile.open( QIODevice::ReadOnly ) )
+        {
+            appendLog( QString( "Fail to open file \'%1\'" ).arg( importPath ) );
+            return;
+        }
+
+        QTextStream stream( &scriptFile );
+        contents = stream.readAll();
+
+        scriptFile.close();
+
+        QJSValue ret = engine.evaluate( contents, file );
+        if( ret.isError() )
+        {
+            appendLog( QString( "Uncaught exception while evaluate file \'%1\': %2" ).arg( importPath ).arg( ret.toString() ) );
+            return;
+        }
+    }
+
     OmpApiCalls* ompApi = new OmpApiCalls();
     QJSValue ompApiValue = engine.newQObject( ompApi );
 

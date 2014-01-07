@@ -1,4 +1,4 @@
 // поиск ТМЦ по номенклатурному номеру (заводскому коду)
-function findStockobjByNomSign( nomSign) {
+function findStockobjByNomSign( nomSign ) {
 	return 111;
 }
