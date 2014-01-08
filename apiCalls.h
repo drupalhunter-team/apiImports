@@ -2,7 +2,7 @@
 #define APICALLS_H
 
 #include <QObject>
-#include <QJsonValue>
+#include <QJsonObject>
 
 class OmpApiCalls : public QObject
 {
@@ -11,7 +11,9 @@ class OmpApiCalls : public QObject
 public:
     OmpApiCalls( QObject* parent = nullptr );
 
-    Q_INVOKABLE QJsonValue call( const QString& url, QJsonValue params );
+    Q_INVOKABLE QJsonObject callSync( const QString& url, const QJsonObject& params );
+
+    Q_INVOKABLE bool isSucceded( const QJsonObject& apiCallResult );
 };
 
 #endif // APICALLS_H

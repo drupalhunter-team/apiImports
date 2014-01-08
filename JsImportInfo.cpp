@@ -16,4 +16,3 @@ JsImportInfo::JsImportInfo( const QJSValue& jsValue, QObject* parent )
     Name = jsValue.property( "importName" ).toString();
     Function = jsValue.property( "importFunction" ).toString();
 }
-
