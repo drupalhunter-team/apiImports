@@ -3,14 +3,14 @@
 
 #include <QThread>
 
-class QProgressBar;
+class JsImportDialog;
 
 class JsImportThread : public QThread
 {
     Q_OBJECT
 
 public:
-    explicit JsImportThread( QProgressBar* progressBar, const QString& file, const QString& function, QObject *parent = nullptr );
+    explicit JsImportThread( JsImportDialog* importDlg, const QString& file, const QString& function, QObject *parent = nullptr );
 
 protected:
     virtual void run();
@@ -26,7 +26,7 @@ signals:
 private:
     QString jsFile;
     QString jsFunction;
-    QProgressBar* importProgressBar;
+    JsImportDialog* jsImportDlg;
 };
 
 #endif // JSIMPORTTHREAD_H

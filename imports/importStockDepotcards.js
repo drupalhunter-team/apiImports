@@ -22,11 +22,19 @@ function runImportDepotcards()
 //	
 //	var fileContent = utils.readFile( path );
 //	utils.log( fileContent );
+	
+	progress.setName1( 'test' );
+	progress.setMaximum1( 10 );
+	for( var i = 0; i < 10; i++) {
+		progress.setValue1( i );
 
-	for (var i = 0; i < 10; i++) {
-		utils.sleep(1000000)
-		utils.log( findStockobjByNomSign( 'sdf' ) );
-	};
+		progress.setName2( i );
+		progress.setMaximum2( 100 );
+		for( var j = 0; j < 100; j++) {
+			utils.sleep(10000)
+			progress.setValue2( j );
+		}
+	}
 
 	utils.log( findStockobjByNomSign( 'asd' ) );
 }

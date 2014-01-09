@@ -6,13 +6,14 @@
 #include <QStringList>
 #include "apiCalls.h"
 #include "jsUtils.h"
+#include "JsImportDialog.h"
 
-JsImportThread::JsImportThread( QProgressBar* progressBar, const QString& file, const QString& function, QObject *parent )
+JsImportThread::JsImportThread( JsImportDialog* importDlg, const QString& file, const QString& function, QObject *parent )
     : QThread( parent )
 {
     jsFile = file;
     jsFunction = function;
-    importProgressBar = progressBar;
+    jsImportDlg = importDlg;
 }
 
 void JsImportThread::run()
@@ -94,6 +95,11 @@ void JsImportThread::run()
     QObject::connect( jsUtils, SIGNAL( log(const QString&) ), this, SIGNAL( appendLog(const QString&) ) );
 
     engine.globalObject().setProperty( "utils", jsUtilsValue );
+
+    JsImportProgress* progress = new JsImportProgress( jsImportDlg );
+    QJSValue progressJsValue = engine.newQObject( progress );
+
+    engine.globalObject().setProperty( "progress", progressJsValue );
 
     QJSValue runImportFunction = engine.globalObject().property( jsFunction );
 

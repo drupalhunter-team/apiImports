@@ -14,13 +14,13 @@
 #include <QCoreApplication>
 #include <QDirModel>
 #include <QTextEdit>
-#include <QProgressBar>
 #include "apiCalls.h"
 #include "settings.h"
 #include "jsUtils.h"
 #include "JsImportInfo.h"
 #include "JsImportsModel.h"
 #include "JsImportThread.h"
+#include "JsImportDialog.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -119,17 +119,17 @@ void MainWindow::initImportsListView()
 
 void MainWindow::runImport( const QString& file, const QString& function )
 {
-    QProgressBar* progressBar = new QProgressBar();
+    JsImportDialog* importDlg = new JsImportDialog();
 
-    JsImportThread *importThread = new JsImportThread( progressBar, file, function, this );
+    JsImportThread *importThread = new JsImportThread( importDlg, file, function, this );
 
     connect( importThread, &JsImportThread::finished, importThread, &QObject::deleteLater );
-    connect( importThread, &JsImportThread::finished, progressBar, &QWidget::close );
+    connect( importThread, &JsImportThread::finished, importDlg, &QWidget::close );
     connect( importThread, &JsImportThread::appendLog, this, &MainWindow::appendLog );
-    connect( importThread, &JsImportThread::setProgressMaximum, progressBar, &QProgressBar::setMaximum );
-    connect( importThread, &JsImportThread::setProgressValue, progressBar, &QProgressBar::setValue );
+//    connect( importThread, &JsImportThread::setProgressMaximum, progressBar, &QProgressBar::setMaximum );
+//    connect( importThread, &JsImportThread::setProgressValue, progressBar, &QProgressBar::setValue );
 
-    progressBar->show();
+    importDlg->show();
     importThread->start();
 }
 
