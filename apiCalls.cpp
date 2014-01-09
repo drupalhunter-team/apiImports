@@ -46,6 +46,8 @@ QJsonObject OmpApiCalls::callSync( const QString& url, const QJsonObject& params
 
         res.insert( "error", jsonErrorObj );
 
+        qDebug() << "res" << res;
+
         return res;
     }
 
@@ -53,14 +55,17 @@ QJsonObject OmpApiCalls::callSync( const QString& url, const QJsonObject& params
     res = QJsonDocument::fromJson( reply->readAll(), &error ).object();
 
     if( QJsonParseError::NoError != error.error )
+    {
+        // fill parse error here
         return QJsonObject();
+    }
 
     qDebug() << "res" << res;
 
     return res;
 }
 
-bool OmpApiCalls::isSucceded( const QJsonObject& apiCallResult )
+bool OmpApiCalls::isSucceded( const QJsonObject& apiCallResult, QString& errStr )
 {
     if( apiCallResult.isEmpty() )
         return false;
@@ -70,7 +75,10 @@ bool OmpApiCalls::isSucceded( const QJsonObject& apiCallResult )
 
     QJsonObject err = apiCallResult[ "error" ].toObject();
     if( err[ "Code" ] != QJsonValue( 0 ) )
+    {
+        errStr = err[ "String" ].isString() ? err[ "String" ].toString() : "Undefined error";
         return false;
+    }
 
     return true;
 }

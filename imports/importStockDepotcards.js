@@ -23,6 +23,11 @@ function runImportDepotcards()
 //	var fileContent = utils.readFile( path );
 //	utils.log( fileContent );
 
+	for (var i = 0; i < 10; i++) {
+		utils.sleep(1000000)
+		utils.log( findStockobjByNomSign( 'sdf' ) );
+	};
+
 	utils.log( findStockobjByNomSign( 'asd' ) );
 }
 

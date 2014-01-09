@@ -14,11 +14,13 @@
 #include <QCoreApplication>
 #include <QDirModel>
 #include <QTextEdit>
+#include <QProgressBar>
 #include "apiCalls.h"
 #include "settings.h"
 #include "jsUtils.h"
 #include "JsImportInfo.h"
 #include "JsImportsModel.h"
+#include "JsImportThread.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -117,95 +119,18 @@ void MainWindow::initImportsListView()
 
 void MainWindow::runImport( const QString& file, const QString& function )
 {
-    QJSEngine engine;
+    QProgressBar* progressBar = new QProgressBar();
 
-    {
-        QString contents;
+    JsImportThread *importThread = new JsImportThread( progressBar, file, function, this );
 
-        QFile scriptFile( file );
-        if( !scriptFile.open( QIODevice::ReadOnly ) )
-        {
-            qDebug() << "Fail to open file \"" << file << "\"";
-            return;
-        }
+    connect( importThread, &JsImportThread::finished, importThread, &QObject::deleteLater );
+    connect( importThread, &JsImportThread::finished, progressBar, &QWidget::close );
+    connect( importThread, &JsImportThread::appendLog, this, &MainWindow::appendLog );
+    connect( importThread, &JsImportThread::setProgressMaximum, progressBar, &QProgressBar::setMaximum );
+    connect( importThread, &JsImportThread::setProgressValue, progressBar, &QProgressBar::setValue );
 
-        QTextStream stream( &scriptFile );
-        contents = stream.readAll();
-
-        scriptFile.close();
-
-        QJSValue ret = engine.evaluate( contents, file );
-        if( ret.isError() )
-        {
-            qDebug() << "Uncaught exception: " << ret.toString();
-            return;
-        }
-    }
-
-    QStringList imports;
-
-    QJSValue includesJsArray = engine.globalObject().property( "includes" );
-    if( includesJsArray.isObject() )
-    {
-        Q_ASSERT( includesJsArray.isArray() );
-
-        QString path = file.left( file.lastIndexOf( '/' ) );
-
-        int length = includesJsArray.property( "length" ).toInt();
-        for( long j = 0; j < length; j++ )
-        {
-            QJSValue import = includesJsArray.property( j );
-            imports << path + "/" + import.toString();
-        }
-    }
-
-    foreach( QString importPath, imports )
-    {
-        QString contents;
-
-        QFile scriptFile( importPath );
-        if( !scriptFile.open( QIODevice::ReadOnly ) )
-        {
-            appendLog( QString( "Fail to open file \'%1\'" ).arg( importPath ) );
-            return;
-        }
-
-        QTextStream stream( &scriptFile );
-        contents = stream.readAll();
-
-        scriptFile.close();
-
-        QJSValue ret = engine.evaluate( contents, file );
-        if( ret.isError() )
-        {
-            appendLog( QString( "Uncaught exception while evaluate file \'%1\': %2" ).arg( importPath ).arg( ret.toString() ) );
-            return;
-        }
-    }
-
-    OmpApiCalls* ompApi = new OmpApiCalls();
-    QJSValue ompApiValue = engine.newQObject( ompApi );
-
-    engine.globalObject().setProperty( "API", ompApiValue );
-
-    OmpApiJsUtils* jsUtils = new OmpApiJsUtils();
-    QJSValue jsUtilsValue = engine.newQObject( jsUtils );
-
-    QObject::connect( jsUtils, SIGNAL( log(const QString&) ), this, SLOT( appendLog(const QString&) ) );
-
-    engine.globalObject().setProperty( "utils", jsUtilsValue );
-
-    QJSValue runImportFunction = engine.globalObject().property( function );
-
-    QJSValue res = runImportFunction.call( QJSValueList() );
-
-    if( res.isError() )
-    {
-        qDebug() << "Uncaught exception: " << res.toString();
-        return;
-    }
-
-    qDebug() << res.toString();
+    progressBar->show();
+    importThread->start();
 }
 
 void MainWindow::openSettings()

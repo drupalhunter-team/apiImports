@@ -19,7 +19,8 @@ SOURCES += main.cpp\
     jsUtils.cpp \
     JsImportInfo.cpp \
     JsImportsModel.cpp \
-    Login.cpp
+    Login.cpp \
+    JsImportThread.cpp
 
 HEADERS  += mainwindow.h \
     apiCalls.h \
@@ -27,4 +28,5 @@ HEADERS  += mainwindow.h \
     jsUtils.h \
     JsImportInfo.h \
     JsImportsModel.h \
-    Login.h
+    Login.h \
+    JsImportThread.h

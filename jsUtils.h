@@ -14,6 +14,8 @@ public:
     Q_INVOKABLE QJSValue chooseFile();
     Q_INVOKABLE QJSValue readFile( const QString& path );
 
+    Q_INVOKABLE void sleep( int miliseconds );
+
 signals:
     void log( const QString& msg );
 };

@@ -13,7 +13,7 @@ public:
 
     Q_INVOKABLE QJsonObject callSync( const QString& url, const QJsonObject& params );
 
-    Q_INVOKABLE bool isSucceded( const QJsonObject& apiCallResult );
+    Q_INVOKABLE bool isSucceded( const QJsonObject& apiCallResult, QString& errStr = QString() );
 };
 
 #endif // APICALLS_H

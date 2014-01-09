@@ -2,6 +2,7 @@
 #include <QFileDialog>
 #include <QDebug>
 #include <QTextStream>
+#include <QThread>
 
 OmpApiJsUtils::OmpApiJsUtils( QObject* parent )
     : QObject( parent )
@@ -27,8 +28,7 @@ QJSValue OmpApiJsUtils::readFile( const QString& path )
     return QJSValue( stream.readAll() );
 }
 
-//QJSValue OmpApiJsUtils::log( const QString& msg )
-//{
-//    qDebug() << msg;
-//    return QJSValue();
-//}
+void OmpApiJsUtils::sleep( int usec )
+{
+    QThread::usleep( usec );
+}

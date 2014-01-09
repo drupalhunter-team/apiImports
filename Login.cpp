@@ -3,7 +3,9 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QMessageBox>
 #include "apiCalls.h"
+#include "jsUtils.h"
 
 
 LoginDialog::LoginDialog( QWidget* parent )
@@ -67,12 +69,19 @@ void LoginDialog::doLogin()
 
     QJsonObject res = apiCalls.callSync( url, params );
 
-    if( apiCalls.isSucceded( res ) )
+    QString errStr;
+    if( !apiCalls.isSucceded( res, errStr ) )
     {
-        if( !res[ "authToken" ].isString() )
-            Q_ASSERT( false );
+        QMessageBox msgBox;
+        msgBox.setText( errStr );
 
-        _authToken = res[ "authToken" ].toString();
-        close();
+        msgBox.exec();
+        return;
     }
+
+    if( !res[ "authToken" ].isString() )
+        Q_ASSERT( false );
+
+    _authToken = res[ "authToken" ].toString();
+    close();
 }
