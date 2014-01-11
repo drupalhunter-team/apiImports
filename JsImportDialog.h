@@ -34,7 +34,7 @@ class JsImportProgress : public QObject
     Q_OBJECT
 
 public:
-    JsImportProgress( JsImportDialog* importDlg, QObject *parent = nullptr );
+    JsImportProgress( const JsImportDialog* importDlg, QObject *parent = nullptr );
 
 /*    Q_INVOKABLE void setName1( const QString& name );
     Q_INVOKABLE void setMaximum1( int maximum );
@@ -55,7 +55,7 @@ signals:
     void setValue2( int value );
 
 private:
-    JsImportDialog* jsImportDialog;
+    const JsImportDialog* jsImportDialog;
 };
 
 #endif // JSIMPORTDIALOG_H

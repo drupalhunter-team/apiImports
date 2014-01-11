@@ -49,7 +49,7 @@ void JsImportDialog::setValue2( int value )
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-JsImportProgress::JsImportProgress( JsImportDialog* importDlg, QObject *parent )
+JsImportProgress::JsImportProgress( const JsImportDialog* importDlg, QObject *parent )
     : QObject( parent )
 {
     jsImportDialog = importDlg;

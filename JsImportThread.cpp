@@ -7,26 +7,65 @@
 #include "apiCalls.h"
 #include "jsUtils.h"
 #include "JsImportDialog.h"
+#include "JsImportInfo.h"
+#include "JsImportEngine.h"
 
-JsImportThread::JsImportThread( JsImportDialog* importDlg, const QString& file, const QString& function, QObject *parent )
+JsImportThread::JsImportThread( const JsImportInfo* info, QObject *parent )
     : QThread( parent )
 {
-    jsFile = file;
-    jsFunction = function;
-    jsImportDlg = importDlg;
+    _jsImportInfo = info;
+}
+
+//JsImportThread::JsImportThread( QThread* guiThread, JsImportDialog* importDlg, const JsImportInfo* importInfo, QObject *parent )
+//    : QThread( parent )
+//{
+//    _guiThread = guiThread;
+//    _jsImportInfo = new JsImportInfo( importInfo, this );
+//    jsImportDlg = importDlg;
+//}
+
+void JsImportThread::setImportPrepareResults( const QJsonObject& prepareResults )
+{
+    _prepareResults = prepareResults;
+}
+
+void JsImportThread::setImportDialogProgressWidget( const JsImportDialog* importDlg )
+{
+    _importProgressWidget = importDlg;
+}
+
+QThread* JsImportThread::getGuiThread()
+{
+    return _guiThread;
 }
 
 void JsImportThread::run()
 {
+    JsImportEngine __engine;
+
+    QObject::connect( &__engine, SIGNAL( appendLog(const QString&) ), this, SIGNAL( appendLog(const QString&) ) );
+
+    if( !__engine.init( _jsImportInfo ) )
+        return;
+
+    __engine.setImportProgressWidget( _importProgressWidget );
+
+    if( !__engine.hasImportFunction() )
+        return;
+
+    __engine.runImportFunction( _prepareResults );
+
+    return;
+/*
     QJSEngine engine;
 
     {
         QString contents;
 
-        QFile scriptFile( jsFile );
+        QFile scriptFile( _jsImportInfo->File );
         if( !scriptFile.open( QIODevice::ReadOnly ) )
         {
-            emit appendLog( QString( "Fail to open file \'%1\'" ).arg( jsFile ) );
+            emit appendLog( QString( "Fail to open file \'%1\'" ).arg( _jsImportInfo->File ) );
             return;
         }
 
@@ -35,7 +74,7 @@ void JsImportThread::run()
 
         scriptFile.close();
 
-        QJSValue ret = engine.evaluate( contents, jsFile );
+        QJSValue ret = engine.evaluate( contents, _jsImportInfo->File );
         if( ret.isError() )
         {
             emit appendLog( QString( "Uncaught exception: %1" ).arg( ret.toString() ) );
@@ -50,7 +89,7 @@ void JsImportThread::run()
     {
         Q_ASSERT( includesJsArray.isArray() );
 
-        QString path = jsFile.left( jsFile.lastIndexOf( '/' ) );
+        QString path = _jsImportInfo->File.left( _jsImportInfo->File.lastIndexOf( '/' ) );
 
         int length = includesJsArray.property( "length" ).toInt();
         for( long j = 0; j < length; j++ )
@@ -101,7 +140,9 @@ void JsImportThread::run()
 
     engine.globalObject().setProperty( "progress", progressJsValue );
 
-    QJSValue runImportFunction = engine.globalObject().property( jsFunction );
+    QJSValue prepareFunction = engine.globalObject().property( _jsImportInfo->PrepareFunction );
+
+    QJSValue runImportFunction = engine.globalObject().property( _jsImportInfo->ImportFunction );
 
     QJSValue res = runImportFunction.call( QJSValueList() );
 
@@ -111,7 +152,7 @@ void JsImportThread::run()
         return;
     }
 
-    emit appendLog( res.toString() );
+    emit appendLog( res.toString() );*/
 }
 
 //void JsImportThread::appendLog( const QString& msg )

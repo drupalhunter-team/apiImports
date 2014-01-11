@@ -14,6 +14,7 @@
 #include <QCoreApplication>
 #include <QDirModel>
 #include <QTextEdit>
+#include <QJsonObject>
 #include "apiCalls.h"
 #include "settings.h"
 #include "jsUtils.h"
@@ -21,6 +22,7 @@
 #include "JsImportsModel.h"
 #include "JsImportThread.h"
 #include "JsImportDialog.h"
+#include "JsImportEngine.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -105,11 +107,7 @@ void MainWindow::initImportsListView()
             for( long j = 0; j < length; j++ )
             {
                 QJSValue jsImportVal = avImports.property( j );
-
-                JsImportInfo* importInfo = new JsImportInfo( jsImportVal, this );
-                importInfo->File = path + "/" + jsFiles[i];
-
-                jsImports << importInfo;
+                jsImports << new JsImportInfo( path + "/" + jsFiles[i], jsImportVal, this );
             }
         }
     }
@@ -117,20 +115,48 @@ void MainWindow::initImportsListView()
     importsView->setModel( new JsImportsModel( jsImports, this ) );
 }
 
-void MainWindow::runImport( const QString& file, const QString& function )
+void MainWindow::runImport( const JsImportInfo* importInfo )
 {
-    JsImportDialog* importDlg = new JsImportDialog();
+    JsImportEngine* engine = new JsImportEngine( this );
 
-    JsImportThread *importThread = new JsImportThread( importDlg, file, function, this );
+    QObject::connect( engine, SIGNAL( appendLog(const QString&) ), this, SIGNAL( appendLog(const QString&) ) );
 
-    connect( importThread, &JsImportThread::finished, importThread, &QObject::deleteLater );
-    connect( importThread, &JsImportThread::finished, importDlg, &QWidget::close );
-    connect( importThread, &JsImportThread::appendLog, this, &MainWindow::appendLog );
+    if( !engine->init( importInfo ) )
+        return;
+
+    QJsonObject prepareResults;
+    if( engine->hasPrepareFunction() && !engine->runPrepareFunction( prepareResults ) )
+        return;
+
+    if( engine->hasImportFunction() )
+    {
+        JsImportDialog* importDlg = new JsImportDialog();
+//        engine->setImportProgressWidget( importDlg );
+
+        JsImportThread *importThread = new JsImportThread( importInfo );
+        importThread->setImportPrepareResults( prepareResults );
+        importThread->setImportDialogProgressWidget( importDlg );
+
+        connect( importThread, &JsImportThread::finished, importThread, &QObject::deleteLater );
+        connect( importThread, &JsImportThread::finished, importDlg, &QWidget::close );
+        connect( importThread, &JsImportThread::appendLog, this, &MainWindow::appendLog );
+
+        importDlg->show();
+        importThread->start();
+
+//        QtConcurrent::run( engine->runImportFunction() );
+    }
+
+//    JsImportThread *importThread = new JsImportThread( QThread::currentThread(), importDlg, importInfo, this );
+//
+//    connect( importThread, &JsImportThread::finished, importThread, &QObject::deleteLater );
+//    connect( importThread, &JsImportThread::finished, importDlg, &QWidget::close );
+//    connect( importThread, &JsImportThread::appendLog, this, &MainWindow::appendLog );
 //    connect( importThread, &JsImportThread::setProgressMaximum, progressBar, &QProgressBar::setMaximum );
 //    connect( importThread, &JsImportThread::setProgressValue, progressBar, &QProgressBar::setValue );
-
-    importDlg->show();
-    importThread->start();
+//
+//    importDlg->show();
+//    importThread->start();
 }
 
 void MainWindow::openSettings()
@@ -143,11 +169,10 @@ void MainWindow::openSettings()
 void MainWindow::onImportDblClicked( const QModelIndex& index )
 {
     QAbstractItemModel* model = importsView->model();
+    QObject* obj = model->data( index, JsImportsModel::ImportInfoRole ).value<QObject*>();
+    JsImportInfo* jsImportInfo = qobject_cast<JsImportInfo*>( obj );
 
-    QModelIndex fileIndex = model->index( index.row(), JsImportsModel::HidFile );
-    QModelIndex fnIndex = model->index( index.row(), JsImportsModel::HidFunction );
-
-    runImport( model->data( fileIndex ).toString(), model->data( fnIndex ).toString() );
+    runImport( jsImportInfo );
 }
 
 void MainWindow::appendLog( const QString& msg )

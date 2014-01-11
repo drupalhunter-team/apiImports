@@ -13,6 +13,10 @@ public:
         HidFunction,
     };
 
+    enum {
+        ImportInfoRole = Qt::UserRole + 1,
+    };
+
 public:
     JsImportsModel( const QList<JsImportInfo*>& imports, QObject* parent = 0 );
 

@@ -1,6 +1,7 @@
 var includes = ['utils/stockUtils.js']
 
 var availibleImports = [ { importName: 'Импорт складских карточек',
+                           prepareFunction: 'prepareImportDepotcards',
                            importFunction: 'runImportDepotcards' },
 						 { importName: 'Импорт складских ВЗН',
 						   importFunction: 'runImportStockInplants' }
@@ -10,19 +11,19 @@ var availibleExports = []
 
 var server = 'http://localhost:8080'
 
-function runImportDepotcards()
+function prepareImportDepotcards()
 {
-//	var path = utils.chooseFile();
-//	var params = { login: 'avs',
-//                   password: '123456',
-//				   path: path
-//				 };
-//				 
-//	API.call( server + '/login.getAuthToken', params );
-//	
-//	var fileContent = utils.readFile( path );
-//	utils.log( fileContent );
-	
+	var sourceFile = utils.chooseFile();
+	return { sourceFile: sourceFile };
+}
+
+function runImportDepotcards( preparedParams )
+{
+//	utils.log('123')
+//	var sourceFile = utils.chooseFile();
+
+	utils.log( preparedParams['sourceFile'] );
+
 	progress.setName1( 'test' );
 	progress.setMaximum1( 10 );
 	for( var i = 0; i < 10; i++) {

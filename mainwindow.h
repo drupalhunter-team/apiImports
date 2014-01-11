@@ -6,6 +6,7 @@
 class QTableView;
 class QTextEdit;
 class QSettings;
+class JsImportInfo;
 
 class MainWindow : public QMainWindow
 {
@@ -17,7 +18,7 @@ public:
 
 private:
     void initImportsListView();
-    void runImport( const QString& file, const QString& function );
+    void runImport( const JsImportInfo* importInfo );
 
 private slots:
     void openSettings();

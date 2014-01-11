@@ -12,12 +12,14 @@ class JsImportInfo : public QObject
 
 public:
     JsImportInfo( QObject* parent = nullptr );
-    JsImportInfo( const QJSValue& jsValue, QObject* parent = nullptr );
+    JsImportInfo( const JsImportInfo* src, QObject* parent = nullptr );
+    JsImportInfo( const QString& importFile, const QJSValue& jsValue, QObject* parent = nullptr );
 
 public:
     QString Name;
-    QString Function;
     QString File;
+    QString PrepareFunction;
+    QString ImportFunction;
 };
 
 #endif // JSIMPORTINFO_H

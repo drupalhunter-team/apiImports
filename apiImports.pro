@@ -21,7 +21,8 @@ SOURCES += main.cpp\
     JsImportsModel.cpp \
     Login.cpp \
     JsImportThread.cpp \
-    JsImportDialog.cpp
+    JsImportDialog.cpp \
+    JsImportEngine.cpp
 
 HEADERS  += mainwindow.h \
     apiCalls.h \
@@ -31,4 +32,5 @@ HEADERS  += mainwindow.h \
     JsImportsModel.h \
     Login.h \
     JsImportThread.h \
-    JsImportDialog.h
+    JsImportDialog.h \
+    JsImportEngine.h

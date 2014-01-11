@@ -5,7 +5,16 @@ JsImportInfo::JsImportInfo( QObject* parent )
     : QObject( parent )
 { }
 
-JsImportInfo::JsImportInfo( const QJSValue& jsValue, QObject* parent )
+JsImportInfo::JsImportInfo( const JsImportInfo* src, QObject* parent )
+    : QObject( parent )
+{
+    File = src->File;
+    Name = src->Name;
+    PrepareFunction = src->PrepareFunction;
+    ImportFunction = src->ImportFunction;
+}
+
+JsImportInfo::JsImportInfo( const QString& importFile, const QJSValue& jsValue, QObject* parent )
     : QObject( parent )
 {
     if( jsValue.isUndefined() )
@@ -13,6 +22,8 @@ JsImportInfo::JsImportInfo( const QJSValue& jsValue, QObject* parent )
 
     Q_ASSERT( jsValue.isObject() );
 
+    File = importFile;
     Name = jsValue.property( "importName" ).toString();
-    Function = jsValue.property( "importFunction" ).toString();
+    PrepareFunction = jsValue.property( "prepareFunction" ).toString();
+    ImportFunction = jsValue.property( "importFunction" ).toString();
 }

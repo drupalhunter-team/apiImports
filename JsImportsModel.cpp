@@ -47,8 +47,11 @@ QVariant JsImportsModel::data( const QModelIndex& index, int role ) const
 
         if( hid == HidName )     return importInfo->Name;
         if( hid == HidFile )     return importInfo->File;
-        if( hid == HidFunction ) return importInfo->Function;
+        if( hid == HidFunction ) return importInfo->ImportFunction;
     }
+
+    if( ImportInfoRole == role )
+        return QVariant::fromValue<QObject*>( Imports[ index.row() ] );
 
     return QVariant();
 }
